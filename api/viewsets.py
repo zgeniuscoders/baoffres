@@ -8,8 +8,9 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from api.models import Category, Location
-from api.serializers import CategorySerializer, AddCategorySerializer, LocationSerializer
+from api.models import Category, Location, Job
+from api.serializers import CategorySerializer, AddCategorySerializer, LocationSerializer, JobSerializer, \
+    AddJobSerializer, JobListSerializer
 
 
 @extend_schema_view(
@@ -61,5 +62,45 @@ class LocationViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @method_decorator(cache_page(60 * 60 * 24, key_prefix='location_detail'))
+    def retrieve(self, *args, **kwargs):
+        return super().retrieve(self, *args, **kwargs)
+
+
+@extend_schema_view(
+    create=extend_schema(
+        request=AddJobSerializer,
+        responses={201: JobSerializer},
+    ),
+    list=extend_schema(
+        responses={200: JobListSerializer},
+    ),
+    retrieve=extend_schema(
+        responses={200: JobSerializer},
+    )
+)
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.all()
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    parser_classes = (MultiPartParser, FormParser)
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filter_fields = ("title", "category", "owner")
+    ordering_fields = ("id", "created_at", "updated_at", "title")
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AddJobSerializer
+        elif self.action == 'retrieve':
+            return JobSerializer
+        else:
+            return JobListSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    @method_decorator(cache_page(60 * 60 * 24, key_prefix='jobs_list'))
+    def list(self, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @method_decorator(cache_page(60 * 60 * 24, key_prefix='job_detail'))
     def retrieve(self, *args, **kwargs):
         return super().retrieve(self, *args, **kwargs)
