@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from api.models import Category, Location, Tag, Job
+from api.models import Category, Location, Tag, Job, UserPreference
 
 
 class AddCategorySerializer(serializers.ModelSerializer):
@@ -98,3 +98,20 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         fields = ('id', 'title', 'slug', 'description', 'image', 'locations', 'category', 'owner', 'created_at',
                   'updated_at', 'tags')
+
+
+class UserPreferencesSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    user = UserSerializer(read_only=True)
+
+    categories = serializers.ListSerializer(
+        write_only=True,
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=Category.objects.all(),
+        )
+    )
+
+    class Meta:
+        model = UserPreference
+        fields = ('id', 'user', 'category', 'categories', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
