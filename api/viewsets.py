@@ -4,16 +4,17 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiResponse
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.models import Category, Location, Job, UserPreference
 from api.serializers import CategorySerializer, AddCategorySerializer, LocationSerializer, JobSerializer, \
-    AddJobSerializer, JobListSerializer, UserPreferencesSerializer
+    AddJobSerializer, JobListSerializer, UserPreferencesSerializer, UserSerializer
 
 
 @extend_schema_view(
@@ -161,4 +162,29 @@ class UserViewSet(viewsets.GenericViewSet):
         return Response(
             {},
             status=status.HTTP_200_OK
+        )
+
+
+@extend_schema_view(
+    create=extend_schema(
+        request=UserSerializer
+    )
+)
+class RegisterUserView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            },
+            status=status.HTTP_201_CREATED
         )
