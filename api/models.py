@@ -53,3 +53,11 @@ class Job(models.Model):
             self.slug = slugify(self.title)
 
         super().save(*args, **kwargs)
+
+
+class UserPreference(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="preferences")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="preferences")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
