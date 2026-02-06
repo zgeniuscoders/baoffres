@@ -1,16 +1,19 @@
+from django.contrib.auth.models import User
 from django.template.context_processors import request
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema_view, extend_schema
-from rest_framework import viewsets
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiResponse
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.response import Response
 
-from api.models import Category, Location, Job
+from api.models import Category, Location, Job, UserPreference
 from api.serializers import CategorySerializer, AddCategorySerializer, LocationSerializer, JobSerializer, \
-    AddJobSerializer, JobListSerializer
+    AddJobSerializer, JobListSerializer, UserPreferencesSerializer
 
 
 @extend_schema_view(
@@ -104,3 +107,58 @@ class JobViewSet(viewsets.ModelViewSet):
     @method_decorator(cache_page(60 * 60 * 24, key_prefix='job_detail'))
     def retrieve(self, *args, **kwargs):
         return super().retrieve(self, *args, **kwargs)
+
+
+@extend_schema_view(
+    preferences=extend_schema(
+        request=UserPreferencesSerializer,
+        responses={
+            200: UserPreferencesSerializer(many=True),
+            201: OpenApiResponse(
+                response=None,
+                description="Préférence créée avec succès"
+            ),
+            401: OpenApiResponse(description="Non authentifié"),
+        },
+        tags=["User Preferences"],
+    )
+)
+class UserViewSet(viewsets.GenericViewSet):
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    @action(detail=False, methods=['post', 'get'], url_path='preferences')
+    @extend_schema(
+        responses={200: UserPreferencesSerializer},
+        request=UserPreferencesSerializer,
+    )
+    def preferences(self, request):
+
+        if request.method == "GET":
+
+            queryset = (UserPreference.objects.filter(
+                user_id=request.user.id
+            ))
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = UserPreferencesSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = UserPreferencesSerializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        serializer = UserPreferencesSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        categories = serializer.validated_data["categories"]
+        for category in categories:
+            UserPreference.objects.create(
+                user_id=request.user.id,
+                category=category
+            )
+
+        return Response(
+            {},
+            status=status.HTTP_200_OK
+        )
