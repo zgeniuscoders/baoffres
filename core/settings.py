@@ -30,7 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env('DEBUG', 'PROD')
 
 ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1"]
 
@@ -86,7 +86,7 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': env('DB_ENGINE'),
+        'ENGINE': env('DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
         'NAME': env('DB_NAME'),
         'USER': env('DB_USERNAME'),
         'PASSWORD': env('DB_PASSWORD'),
@@ -112,7 +112,6 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -165,9 +164,9 @@ CACHES = {
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = env("LANGUAGE_CODE", "en-us")
 
-TIME_ZONE = "UTC"
+TIME_ZONE = env("TIME_ZONE","UTC")
 
 USE_I18N = True
 
