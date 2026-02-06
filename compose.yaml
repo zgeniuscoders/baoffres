@@ -1,0 +1,48 @@
+services:
+
+  pgadmin:
+    container_name: pg_admin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=zgeniuscoders@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=Pgadmin@password-baoffres2026
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  db:
+    container_name: baoffres_db
+    image: postgres
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=baoffres
+      - POSTGRES_PASSWORD=baoffres-2026@password_696
+      - PGDATA=/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+networks:
+  app_network:
+volumes:
+  db-data:
+  pgadmin:
+  redis-data:
