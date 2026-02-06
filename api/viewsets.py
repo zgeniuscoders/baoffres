@@ -8,8 +8,8 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from api.models import Category
-from api.serializers import CategorySerializer, AddCategorySerializer
+from api.models import Category, Location
+from api.serializers import CategorySerializer, AddCategorySerializer, LocationSerializer
 
 
 @extend_schema_view(
@@ -44,5 +44,22 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     @method_decorator(cache_page(60 * 60 * 24, key_prefix='category'))
+    def retrieve(self, *args, **kwargs):
+        return super().retrieve(self, *args, **kwargs)
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filter_fields = ("name",)
+    ordering_fields = ("id", "created_at", "updated_at", "name")
+
+    @method_decorator(cache_page(60 * 60 * 24, key_prefix='location_list'))
+    def list(self, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @method_decorator(cache_page(60 * 60 * 24, key_prefix='location_detail'))
     def retrieve(self, *args, **kwargs):
         return super().retrieve(self, *args, **kwargs)
