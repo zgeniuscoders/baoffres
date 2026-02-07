@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baoffres-api
+  labels:
+    app: baoffres-api
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels: baoffres-api
+  template:
+    metadata:
+      labels:
+        app: baoffres-api
+    spec:
+      containers:
+        - name: baoffres-api
+          image: zgeniuscoders/baoffres:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: POD_NAME
+              valueForm:
+                filedRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/readyz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
