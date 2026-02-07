@@ -1,0 +1,23 @@
+name: baoffres-pipeline
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: retrieve code
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: docker compose build
+
+      - name: Launch test & build
+        run: docker compose run api python manage.py test
+
+      - name: Clean docker environment
+        run: docker compose down
