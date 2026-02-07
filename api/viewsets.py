@@ -188,3 +188,14 @@ class RegisterUserView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED
         )
+
+
+class KubernateViewSet(viewsets.GenericViewSet):
+
+    @action(methods=['get'], detail=False, url_path="healthz")
+    def healthz(self, request):
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path="readyz")
+    def readyz(self, request):
+        return Response(status=status.HTTP_200_OK)
